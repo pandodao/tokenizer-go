@@ -32,6 +32,10 @@ func TestCalToken(t *testing.T) {
 
 func BenchmarkCalToken(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		MustCalToken("Hello World")
+		MustCalToken(`Many words map to one token, but some don't: indivisible.
+
+Unicode characters like emojis may be split into many tokens containing the underlying bytes: 🤚🏾
+
+Sequences of characters commonly found next to each other may be grouped together: 1234567890`)
 	}
 }
