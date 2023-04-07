@@ -1,3 +1,7 @@
+When we attempted to fulfill this requirement, we couldn't find a readily available Go package to use. Due to time constraints, we resorted to a workaround by calling JavaScript instead. However, this approach was not elegant and not very efficient. Now there is a native Go package implementation available at https://github.com/pkoukk/tiktoken-go, please prioritize using it.
+
+---
+
 # tokenizer-go
 
 tokenizer-go is a Go package that simplifies token calculation for OpenAI API users. Although OpenAI does not provide a native Go package for token calculation, tokenizer-go fills the gap by embedding an implementation of an npm package and extracting the results through JavaScript calls. This allows you to use tokenizer-go just like any other Go package in your projects, making it easier to work with token calculations in the Go programming language.
