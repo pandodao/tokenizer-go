@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,9 +28,12 @@ func min[T int | time.Duration](slice []T) T {
 }
 
 func average[T int | time.Duration](slice []T) T {
-	return lo.Reduce(slice, func(agg T, item T, _ int) T {
-		return agg + item
-	}, 0) / T(len(slice))
+	var sum T
+	for _, item := range slice {
+		sum += item
+	}
+
+	return sum / T(len(slice))
 }
 
 func TestNewGojaRuntime(t *testing.T) {
@@ -162,12 +164,12 @@ func TestEncode(t *testing.T) {
 
 		assert.True(t, ignoreTextRan)
 
-		timeCostsForASCIICharacters := lo.Map(timeCostsMat, func(item []time.Duration, _ int) time.Duration {
-			return item[0]
-		})
-		timeCostsForCJKCharacters := lo.Map(timeCostsMat, func(item []time.Duration, _ int) time.Duration {
-			return item[1]
-		})
+		timeCostsForASCIICharacters := make([]time.Duration, len(timeCostsMat))
+		timeCostsForCJKCharacters := make([]time.Duration, len(timeCostsMat))
+		for i := range timeCostsMat {
+			timeCostsForASCIICharacters[i] = timeCostsMat[i][0]
+			timeCostsForCJKCharacters[i] = timeCostsMat[i][1]
+		}
 
 		t.Logf("Encode(ASCII_Characters) ran %d times concurrently, cost average: %s, cost min: %s, cost max: %s",
 			concurrency,
@@ -249,12 +251,13 @@ func TestDecode(t *testing.T) {
 			}
 		}
 
-		timeCostsForASCIICharacters := lo.Map(timeCostsMat, func(item []time.Duration, _ int) time.Duration {
-			return item[0]
-		})
-		timeCostsForCJKCharacters := lo.Map(timeCostsMat, func(item []time.Duration, _ int) time.Duration {
-			return item[1]
-		})
+		timeCostsForASCIICharacters := make([]time.Duration, len(timeCostsMat))
+		timeCostsForCJKCharacters := make([]time.Duration, len(timeCostsMat))
+		for i := range timeCostsMat {
+			timeCostsForASCIICharacters[i] = timeCostsMat[i][0]
+			timeCostsForCJKCharacters[i] = timeCostsMat[i][1]
+		}
+
 		t.Logf("Decode(ASCII_Characters) ran %d times concurrently, cost average: %s, cost min: %s, cost max: %s",
 			concurrency,
 			average(timeCostsForASCIICharacters),
@@ -335,12 +338,13 @@ func TestCalToken(t *testing.T) {
 			}
 		}
 
-		timeCostsForASCIICharacters := lo.Map(timeCostsMat, func(item []time.Duration, _ int) time.Duration {
-			return item[0]
-		})
-		timeCostsForCJKCharacters := lo.Map(timeCostsMat, func(item []time.Duration, _ int) time.Duration {
-			return item[1]
-		})
+		timeCostsForASCIICharacters := make([]time.Duration, len(timeCostsMat))
+		timeCostsForCJKCharacters := make([]time.Duration, len(timeCostsMat))
+		for i := range timeCostsMat {
+			timeCostsForASCIICharacters[i] = timeCostsMat[i][0]
+			timeCostsForCJKCharacters[i] = timeCostsMat[i][1]
+		}
+
 		t.Logf("Decode(ASCII_Characters) ran %d times concurrently, cost average: %s, cost min: %s, cost max: %s",
 			concurrency,
 			average(timeCostsForASCIICharacters),
