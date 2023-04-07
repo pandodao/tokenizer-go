@@ -50,7 +50,7 @@ func TestValidateFunctionsWithinGojaRuntime(t *testing.T) {
 	vm := goja.New()
 	registry.Enable(vm)
 
-	encode, decode, err := validateFunctionsWithinGojaRuntime(vm)
+	encode, decode, err := getEncodeAndDecodeFunctionsWithinGojaRuntime(vm)
 	require.Error(t, err)
 	assert.EqualError(t, err, "encode is not a function")
 	assert.Nil(t, encode)
@@ -61,7 +61,7 @@ func TestValidateFunctionsWithinGojaRuntime(t *testing.T) {
 		 function encode(str) {return tokenizer.encode(str)}`)
 	require.NoError(t, err)
 
-	encode, decode, err = validateFunctionsWithinGojaRuntime(vm)
+	encode, decode, err = getEncodeAndDecodeFunctionsWithinGojaRuntime(vm)
 	require.Error(t, err)
 	assert.EqualError(t, err, "decode is not a function")
 	assert.Nil(t, encode)
@@ -70,7 +70,7 @@ func TestValidateFunctionsWithinGojaRuntime(t *testing.T) {
 	_, err = vm.RunString("function decode(tokens) {return tokenizer.decode(tokens)}")
 	require.NoError(t, err)
 
-	encode, decode, err = validateFunctionsWithinGojaRuntime(vm)
+	encode, decode, err = getEncodeAndDecodeFunctionsWithinGojaRuntime(vm)
 	require.NoError(t, err)
 	assert.NotNil(t, encode)
 	assert.NotNil(t, decode)

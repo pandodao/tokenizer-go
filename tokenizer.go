@@ -34,10 +34,14 @@ var (
 
 // gojaRuntime is a wrapper of *goja.Runtime with the error
 type gojaRuntime struct {
-	vm     *goja.Runtime
+	// runtime itself
+	vm *goja.Runtime
+	// encode function that registered in the runtime
 	encode goja.Callable
+	// decode function that registered in the runtime
 	decode goja.Callable
 
+	// err is the error occurred during the initialization
 	err error
 }
 
@@ -83,7 +87,7 @@ func newGojaRuntime() *gojaRuntime {
 		}
 	}
 
-	encode, decode, err := validateFunctionsWithinGojaRuntime(vm)
+	encode, decode, err := getEncodeAndDecodeFunctionsWithinGojaRuntime(vm)
 	return &gojaRuntime{
 		vm:     vm,
 		encode: encode,
@@ -92,9 +96,9 @@ func newGojaRuntime() *gojaRuntime {
 	}
 }
 
-// validateFunctionsWithinGojaRuntime validates the existence of
-// the tokenizer functions within the *goja.Runtime
-func validateFunctionsWithinGojaRuntime(vm *goja.Runtime) (goja.Callable, goja.Callable, error) {
+// getEncodeAndDecodeFunctionsWithinGojaRuntime returns the encode and
+// decode functions within the *goja.Runtime
+func getEncodeAndDecodeFunctionsWithinGojaRuntime(vm *goja.Runtime) (goja.Callable, goja.Callable, error) {
 	encode, ok := goja.AssertFunction(vm.Get("encode"))
 	if !ok {
 		return nil, nil, errors.New("encode is not a function")
@@ -139,7 +143,7 @@ func Encode(str string) (*EncodeResult, error) {
 	if gojaRuntime.err != nil {
 		return nil, gojaRuntime.err
 	}
-	defer pool.Put(gojaRuntime)
+	defer pool.Put(gojaRuntime) // put it back to the pool
 
 	v, err := gojaRuntime.encode(goja.Undefined(), gojaRuntime.vm.ToValue(str))
 	if err != nil {
@@ -169,7 +173,7 @@ func Decode(tokens []int) (string, error) {
 	if gojaRuntime.err != nil {
 		return "", gojaRuntime.err
 	}
-	defer pool.Put(gojaRuntime)
+	defer pool.Put(gojaRuntime) // put it back to the pool
 
 	v, err := gojaRuntime.decode(goja.Undefined(), gojaRuntime.vm.ToValue(tokens))
 	if err != nil {
