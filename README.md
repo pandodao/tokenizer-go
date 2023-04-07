@@ -66,37 +66,56 @@ Usage of tokenizer:
 
 ```
 % go test -v -bench=.
+=== RUN   TestNewGojaRuntime
+--- PASS: TestNewGojaRuntime (0.00s)
+=== RUN   TestValidateFunctionsWithinGojaRuntime
+--- PASS: TestValidateFunctionsWithinGojaRuntime (0.61s)
 === RUN   TestEncode
-=== RUN   TestEncode/Hello_World
-    tokenizer_test.go:42: Encode(Hello World) cost: 1.151195ms
-=== RUN   TestEncode/你好，世界
-    tokenizer_test.go:42: Encode(你好，世界) cost: 1.003894ms
---- PASS: TestEncode (0.00s)
-    --- PASS: TestEncode/Hello_World (0.00s)
-    --- PASS: TestEncode/你好，世界 (0.00s)
+=== RUN   TestEncode/ASCII_Characters
+    tokenizer_test.go:117: Encode(Hello World) cost: 620.252292ms
+=== RUN   TestEncode/CJK_Characters
+    tokenizer_test.go:117: Encode(你好，世界) cost: 387.25µs
+=== RUN   TestEncode/WithConcurrency
+    tokenizer_test.go:172: Encode(ASCII_Characters) ran 20 times concurrently, cost average: 361.588418ms, cost min: 75.833µs, cost max: 1.829107916s
+    tokenizer_test.go:178: Encode(CJK_Characters) ran 20 times concurrently, cost average: 446.462658ms, cost min: 170.292µs, cost max: 1.831984708s
+--- PASS: TestEncode (2.45s)
+    --- PASS: TestEncode/ASCII_Characters (0.62s)
+    --- PASS: TestEncode/CJK_Characters (0.00s)
+    --- PASS: TestEncode/WithConcurrency (1.83s)
 === RUN   TestDecode
-=== RUN   TestDecode/[15496_2159]
-    tokenizer_test.go:69: Decode([15496 2159]) cost: 124.855µs
-=== RUN   TestDecode/[19526_254_25001_121_171_120_234_10310_244_45911_234]
-    tokenizer_test.go:69: Decode([19526 254 25001 121 171 120 234 10310 244 45911 234]) cost: 251.501µs
+=== RUN   TestDecode/ASCII_Characters
+    tokenizer_test.go:212: Decode([15496 2159]) cost: 150.416µs
+=== RUN   TestDecode/CJK_Characters
+    tokenizer_test.go:212: Decode([19526 254 25001 121 171 120 234 10310 244 45911 234]) cost: 34.584µs
+=== RUN   TestDecode/WithConcurrency
+    tokenizer_test.go:258: Decode(ASCII_Characters) ran 20 times concurrently, cost average: 45.558µs, cost min: 29.708µs, cost max: 153.458µs
+    tokenizer_test.go:264: Decode(CJK_Characters) ran 20 times concurrently, cost average: 62.145µs, cost min: 37.291µs, cost max: 183.292µs
 --- PASS: TestDecode (0.00s)
-    --- PASS: TestDecode/[15496_2159] (0.00s)
-    --- PASS: TestDecode/[19526_254_25001_121_171_120_234_10310_244_45911_234] (0.00s)
+    --- PASS: TestDecode/ASCII_Characters (0.00s)
+    --- PASS: TestDecode/CJK_Characters (0.00s)
+    --- PASS: TestDecode/WithConcurrency (0.00s)
 === RUN   TestCalToken
-=== RUN   TestCalToken/Hello_World
-    tokenizer_test.go:96: CalToken(Hello World) cost: 293.461µs
-=== RUN   TestCalToken/你好，世界
-    tokenizer_test.go:96: CalToken(你好，世界) cost: 584.905µs
---- PASS: TestCalToken (0.00s)
-    --- PASS: TestCalToken/Hello_World (0.00s)
-    --- PASS: TestCalToken/你好，世界 (0.00s)
+=== RUN   TestCalToken/ASCII_Characters
+    tokenizer_test.go:298: CalToken(Hello World) cost: 357.583µs
+=== RUN   TestCalToken/CJK_Characters
+    tokenizer_test.go:298: CalToken(你好，世界) cost: 217.709µs
+=== RUN   TestCalToken/WithConcurrency
+    tokenizer_test.go:344: Decode(ASCII_Characters) ran 20 times concurrently, cost average: 32.636206ms, cost min: 96.75µs, cost max: 647.582833ms
+    tokenizer_test.go:350: Decode(CJK_Characters) ran 20 times concurrently, cost average: 429.197µs, cost min: 230.375µs, cost max: 1.167416ms
+--- PASS: TestCalToken (0.65s)
+    --- PASS: TestCalToken/ASCII_Characters (0.00s)
+    --- PASS: TestCalToken/CJK_Characters (0.00s)
+    --- PASS: TestCalToken/WithConcurrency (0.65s)
 goos: darwin
-goarch: amd64
+goarch: arm64
 pkg: github.com/pandodao/tokenizer-go
 BenchmarkCalToken
-BenchmarkCalToken-12                 319           3595615 ns/op
+BenchmarkCalToken/ASCII_Characters
+BenchmarkCalToken/ASCII_Characters-10                546           2186558 ns/op
+BenchmarkCalToken/CJK_Characters
+BenchmarkCalToken/CJK_Characters-10                  420           2942631 ns/op
 PASS
-ok      github.com/pandodao/tokenizer-go        2.833s
+ok      github.com/pandodao/tokenizer-go        10.869s
 ```
 
 ## Thanks

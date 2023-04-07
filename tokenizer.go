@@ -3,7 +3,9 @@ package tokenizer
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"path"
+	"sync"
 
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/require"
@@ -19,10 +21,25 @@ var (
 	//go:embed js/text.min.js
 	fastTextEncodingJs string
 
+	registry *require.Registry
+
+	// optimize the alloc and instancing performance of
+	// *goja.Runtime
+	pool sync.Pool = sync.Pool{
+		New: func() any {
+			return newGojaRuntime()
+		},
+	}
+)
+
+// gojaRuntime is a wrapper of *goja.Runtime with the error
+type gojaRuntime struct {
 	vm     *goja.Runtime
 	encode goja.Callable
 	decode goja.Callable
-)
+
+	err error
+}
 
 type EncodeResult struct {
 	Bpe  []int    `json:"bpe"`
@@ -30,8 +47,7 @@ type EncodeResult struct {
 }
 
 func init() {
-	vm = goja.New()
-	registry := require.NewRegistry(require.WithLoader(func(p string) ([]byte, error) {
+	registry = require.NewRegistry(require.WithLoader(func(p string) ([]byte, error) {
 		switch path.Base(p) {
 		case "array-keyed-map":
 			return []byte(arrayKeyedMapJs), nil
@@ -41,24 +57,54 @@ func init() {
 		return nil, require.IllegalModuleNameError
 	}))
 
+	// pre-alloc the *goja.Runtime once
+	runtime := pool.Get().(*gojaRuntime)
+	if runtime.err != nil {
+		panic(runtime.err)
+	}
+
+	pool.Put(runtime) // put it back to the pool
+}
+
+// newGojaRuntime create a new *goja.Runtime and declare the
+// tokenizer functions, it returns the wrapped *gojaRuntime with
+// the error if any occurred during the initialization
+func newGojaRuntime() *gojaRuntime {
+	vm := goja.New()
 	registry.Enable(vm)
 	_, err := vm.RunString(tokenizerJs + "\n" +
 		`const tokenizer = new GPT3NodeTokenizer({type: 'gpt3'});
 		 function encode(str) {return tokenizer.encode(str)}
 		 function decode(tokens) {return tokenizer.decode(tokens)}`)
 	if err != nil {
-		panic(err)
+		return &gojaRuntime{
+			vm:  vm,
+			err: err,
+		}
 	}
 
-	var ok bool
-	encode, ok = goja.AssertFunction(vm.Get("encode"))
-	if !ok {
-		panic("encode is not a function")
+	encode, decode, err := validateFunctionsWithinGojaRuntime(vm)
+	return &gojaRuntime{
+		vm:     vm,
+		encode: encode,
+		decode: decode,
+		err:    err,
 	}
-	decode, ok = goja.AssertFunction(vm.Get("decode"))
+}
+
+// validateFunctionsWithinGojaRuntime validates the existence of
+// the tokenizer functions within the *goja.Runtime
+func validateFunctionsWithinGojaRuntime(vm *goja.Runtime) (goja.Callable, goja.Callable, error) {
+	encode, ok := goja.AssertFunction(vm.Get("encode"))
 	if !ok {
-		panic("decode is not a function")
+		return nil, nil, errors.New("encode is not a function")
 	}
+	decode, ok := goja.AssertFunction(vm.Get("decode"))
+	if !ok {
+		return nil, nil, errors.New("decode is not a function")
+	}
+
+	return encode, decode, nil
 }
 
 func MustCalToken(str string) int {
@@ -66,6 +112,7 @@ func MustCalToken(str string) int {
 	if err != nil {
 		panic(err)
 	}
+
 	return token
 }
 
@@ -88,7 +135,13 @@ func MustEncode(str string) EncodeResult {
 }
 
 func Encode(str string) (*EncodeResult, error) {
-	v, err := encode(goja.Undefined(), vm.ToValue(str))
+	gojaRuntime := pool.Get().(*gojaRuntime)
+	if gojaRuntime.err != nil {
+		return nil, gojaRuntime.err
+	}
+	defer pool.Put(gojaRuntime)
+
+	v, err := gojaRuntime.encode(goja.Undefined(), gojaRuntime.vm.ToValue(str))
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +165,13 @@ func MustDecode(tokens []int) string {
 }
 
 func Decode(tokens []int) (string, error) {
-	v, err := decode(goja.Undefined(), vm.ToValue(tokens))
+	gojaRuntime := pool.Get().(*gojaRuntime)
+	if gojaRuntime.err != nil {
+		return "", gojaRuntime.err
+	}
+	defer pool.Put(gojaRuntime)
+
+	v, err := gojaRuntime.decode(goja.Undefined(), gojaRuntime.vm.ToValue(tokens))
 	if err != nil {
 		return "", err
 	}
