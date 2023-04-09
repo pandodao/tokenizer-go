@@ -1,4 +1,4 @@
-In the beginning, we couldn't find a suitable Go package calculate token for 日本語と中国語. As a result, we called JavaScript as a workaround, but it was not efficient or elegant. However, a native Go package, [tiktoken-go](https://github.com/pkoukk/tiktoken-go) is now available. It is faster, but its calculation result differs slightly from OpenAI's https://platform.openai.com/tokenizer. Please choose it according your requirement.
+In the beginning, we couldn't find a suitable Go package calculate token for 日本語と中国語. As a result, we called JavaScript as a workaround, but it was not efficient or elegant. However, a native Go package, [tiktoken-go](https://github.com/pkoukk/tiktoken-go) is now available. It is faster. Please choose it first.
 
 ---
 
